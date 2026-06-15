@@ -1,11 +1,12 @@
+import os
 from azure.storage.blob import BlobServiceClient
 
-connection_string = ("UseDevelopmentStorage=true")
-
-blob_service_client = BlobServiceClient.from_connection_string(
-    connection_string
+connection_string = os.environ.get(
+    "AZURE_STORAGE_CONNECTION_STRING",
+    "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6ImpFQjSjbZ+pM3hq9NAdnhN+Q==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;"
 )
 
+blob_service_client = BlobServiceClient.from_connection_string(connection_string)
 container_client = blob_service_client.get_container_client("datasets")
 
 with open("All_Diets.csv", "rb") as data:
@@ -14,5 +15,4 @@ with open("All_Diets.csv", "rb") as data:
         data=data,
         overwrite=True
     )
-
 print("Upload complete")
