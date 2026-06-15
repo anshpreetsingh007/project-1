@@ -1,4 +1,4 @@
-azure-storage-blob
+azure-storage-blob==12.19.0
 pandas
 pytest
 watchdogpandas
