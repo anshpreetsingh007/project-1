@@ -1,3 +1,6 @@
+azure-storage-blob
 pandas
+pytest
+watchdogpandas
 matplotlib
 seaborn
