@@ -1,6 +1,7 @@
 azure-storage-blob==12.19.0
 pandas
 pytest
-watchdogpandas
+watchdog
+pandas
 matplotlib
 seaborn
