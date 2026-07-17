@@ -1,0 +1,114 @@
+/* General page style */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f2f2f2;
+}
+
+/* Header */
+header {
+    background-color: #3367d6;
+    color: white;
+    padding: 15px;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 26px;
+}
+
+/* Main content */
+main {
+    width: 90%;
+    margin: 20px auto;
+}
+
+/* Charts layout */
+.charts-container {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+/* Chart box */
+.chart-card {
+    background-color: white;
+    padding: 15px;
+    border: 1px solid lightgray;
+    border-radius: 6px;
+    min-width: 0;
+    height: 330px;
+}
+
+/* Chart title */
+.chart-card h3 {
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+
+/* Chart description */
+.chart-card p {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+/* Chart size */
+.chart-card canvas {
+    width: 100% !important;
+    height: 240px !important;
+}
+
+/* Filters */
+.filters-section {
+    margin-top: 30px;
+}
+
+.filters-section input,
+.filters-section select,
+.filters-section button {
+    padding: 8px;
+    margin-right: 8px;
+}
+
+/* Refresh button */
+.filters-section button {
+    background-color: #3367d6;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+/* Dataset information */
+.metadata-section {
+    margin-top: 30px;
+    background-color: white;
+    padding: 15px;
+    border: 1px solid lightgray;
+    border-radius: 6px;
+}
+
+/* Footer */
+footer {
+    background-color: #3367d6;
+    color: white;
+    text-align: center;
+    padding: 12px;
+    margin-top: 30px;
+}
+
+/* Mobile layout */
+@media (max-width: 768px) {
+
+    .charts-container {
+        grid-template-columns: 1fr;
+    }
+
+    .filters-section input,
+    .filters-section select,
+    .filters-section button {
+        display: block;
+        width: 100%;
+        margin: 8px 0;
+        box-sizing: border-box;
+    }
+}
