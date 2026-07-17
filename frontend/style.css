@@ -78,6 +78,55 @@ main {
     cursor: pointer;
 }
 
+/* API section */
+.api-section {
+    margin-top: 30px;
+}
+
+.api-section button {
+    padding: 9px;
+    margin-right: 8px;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+/* Different button colors */
+#insightsButton {
+    background-color: #3367d6;
+}
+
+#recipesButton {
+    background-color: #2f9e6f;
+}
+
+#clustersButton {
+    background-color: #7a45c7;
+}
+
+/* Pagination section */
+.pagination-section {
+    margin-top: 30px;
+}
+
+.pagination-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.pagination-buttons button {
+    padding: 8px 12px;
+    border: 1px solid lightgray;
+    background-color: white;
+    cursor: pointer;
+}
+
+/* Current page */
+.pagination-buttons .active-page {
+    background-color: #3367d6;
+    color: white;
+}
+
 /* Dataset information */
 .metadata-section {
     margin-top: 30px;
@@ -96,6 +145,12 @@ footer {
     margin-top: 30px;
 }
 
+.api-section button,
+.filters-section button {
+
+    border-radius: 4px;
+}
+
 /* Mobile layout */
 @media (max-width: 768px) {
 
@@ -105,10 +160,15 @@ footer {
 
     .filters-section input,
     .filters-section select,
-    .filters-section button {
+    .filters-section button,
+    .api-section button {
         display: block;
         width: 100%;
         margin: 8px 0;
         box-sizing: border-box;
+    }
+
+    .pagination-buttons {
+        flex-wrap: wrap;
     }
 }

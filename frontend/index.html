@@ -75,6 +75,39 @@
 
         </section>
 
+        <!-- Buttons for future API connection -->
+        <section class="api-section">
+
+            <h2>API Data Interaction</h2>
+
+            <button id="insightsButton">
+                Get Nutritional Insights
+            </button>
+
+            <button id="recipesButton">
+                Get Recipes
+            </button>
+
+            <button id="clustersButton">
+                Get Clusters
+            </button>
+
+        </section>
+
+        <!-- Simple pagination -->
+        <section class="pagination-section">
+
+            <h2>Pagination</h2>
+
+            <div class="pagination-buttons">
+                <button id="previousButton">Previous</button>
+                <button class="page-button active-page">1</button>
+                <button class="page-button">2</button>
+                <button id="nextButton">Next</button>
+            </div>
+
+        </section>
+
         <!-- Dataset information -->
         <section class="metadata-section">
 
@@ -88,6 +121,11 @@
             <p>
                 <strong>Execution Time:</strong>
                 <span id="executionTime">0 milliseconds</span>
+            </p>
+
+            <p>
+                <strong>Selected Diet:</strong>
+                <span id="selectedDiet">All Diet Types</span>
             </p>
 
             <p>

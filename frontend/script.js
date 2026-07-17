@@ -107,7 +107,7 @@ const scatterChart = new Chart(
 );
 
 
-// Simple heatmap using a bar chart
+// Simple heatmap using a horizontal bar chart
 const heatmapChart = new Chart(
     document.getElementById("heatmapChart"),
     {
@@ -135,7 +135,6 @@ const heatmapChart = new Chart(
         options: {
             responsive: true,
             maintainAspectRatio: false,
-
             indexAxis: "y"
         }
     }
@@ -206,6 +205,12 @@ document
     .getElementById("dietFilter")
     .addEventListener("change", function () {
 
+        const selectedDiet =
+            this.options[this.selectedIndex].text;
+
+        document.getElementById("selectedDiet").textContent =
+            selectedDiet;
+
         console.log("Selected diet:", this.value);
     });
 
@@ -217,6 +222,70 @@ document
 
         console.log("Searching for:", this.value);
     });
+
+
+// Nutritional insights button
+document
+    .getElementById("insightsButton")
+    .addEventListener("click", function () {
+
+        alert("Nutritional insights will be loaded from the API");
+    });
+
+
+// Recipes button
+document
+    .getElementById("recipesButton")
+    .addEventListener("click", function () {
+
+        alert("Recipes will be loaded from the API");
+    });
+
+
+// Clusters button
+document
+    .getElementById("clustersButton")
+    .addEventListener("click", function () {
+
+        alert("Clusters will be loaded from the API");
+    });
+
+
+// Previous page button
+document
+    .getElementById("previousButton")
+    .addEventListener("click", function () {
+
+        console.log("Previous page");
+    });
+
+
+// Next page button
+document
+    .getElementById("nextButton")
+    .addEventListener("click", function () {
+
+        console.log("Next page");
+    });
+
+
+// Page number buttons
+const pageButtons =
+    document.querySelectorAll(".page-button");
+
+pageButtons.forEach(function (button) {
+
+    button.addEventListener("click", function () {
+
+        pageButtons.forEach(function (pageButton) {
+            pageButton.classList.remove("active-page");
+        });
+
+        this.classList.add("active-page");
+
+        console.log("Selected page:", this.textContent);
+    });
+});
 
 
 // Load information when the page opens
