@@ -11,7 +11,7 @@ from azure.storage.blob import BlobServiceClient
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.ANONYMOUS)
 
-CONTAINER_NAME = "datasets"
+CONTAINER_NAME = "project1grp7blob"
 BLOB_NAME = "All_Diets.csv"
 
 
