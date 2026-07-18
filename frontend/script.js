@@ -1,292 +1,166 @@
-// Sample data for the dashboard
-const nutritionData = [
-    {
-        diet: "Vegan",
-        protein: 18,
-        carbs: 45,
-        fat: 12,
-        recipes: 120
-    },
-    {
-        diet: "Keto",
-        protein: 30,
-        carbs: 10,
-        fat: 40,
-        recipes: 90
-    },
-    {
-        diet: "Paleo",
-        protein: 28,
-        carbs: 20,
-        fat: 25,
-        recipes: 80
-    },
-    {
-        diet: "Mediterranean",
-        protein: 22,
-        carbs: 35,
-        fat: 18,
-        recipes: 110
-    }
-];
+const FUNCTION_URL = "https://project1-grp7-functionapp-fad3bsdsh4gzcegk.eastus2-01.azurewebsites.net/api/GetNutritionData";
 
+let nutritionData = [];   // populated from the API
+let lastMetadata = {};
+let barChart, scatterChart, heatmapChart, pieChart;
 
-// Bar chart
-const barChart = new Chart(
-    document.getElementById("barChart"),
-    {
-        type: "bar",
+// ====== FETCH DATA FROM AZURE FUNCTION ======
+async function fetchNutritionData() {
+    setLoadingState(true);
 
-        data: {
-            labels: nutritionData.map(item => item.diet),
+    try {
+        const response = await fetch(FUNCTION_URL);
 
-            datasets: [
-                {
-                    label: "Protein",
-                    data: nutritionData.map(item => item.protein)
-                },
-                {
-                    label: "Carbs",
-                    data: nutritionData.map(item => item.carbs)
-                },
-                {
-                    label: "Fat",
-                    data: nutritionData.map(item => item.fat)
-                }
-            ]
-        },
-
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
+        if (!response.ok) {
+            throw new Error(`Server responded with status ${response.status}`);
         }
-    }
-);
 
+        const payload = await response.json();
 
-// Scatter plot
-const scatterChart = new Chart(
-    document.getElementById("scatterChart"),
-    {
-        type: "scatter",
-
-        data: {
-            datasets: [
-                {
-                    label: "Protein and Carbs",
-
-                    data: nutritionData.map(item => ({
-                        x: item.carbs,
-                        y: item.protein
-                    }))
-                }
-            ]
-        },
-
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: "Carbs"
-                    }
-                },
-
-                y: {
-                    title: {
-                        display: true,
-                        text: "Protein"
-                    }
-                }
-            }
+        if (payload.status !== "success") {
+            throw new Error(payload.message || "Unknown API error");
         }
+
+        // Map backend field names to what the charts expect
+        nutritionData = payload.data.map(row => ({
+            diet: row.Diet_type,
+            protein: row["Protein(g)"],
+            carbs: row["Carbs(g)"],
+            fat: row["Fat(g)"]
+        }));
+
+        lastMetadata = payload.metadata;
+
+        renderCharts();
+        updateMetadata();
+        populateDietFilter();
+
+    } catch (err) {
+        console.error("Failed to fetch nutrition data:", err);
+        alert("Could not load data from the API: " + err.message);
+    } finally {
+        setLoadingState(false);
     }
-);
-
-
-// Simple heatmap using a horizontal bar chart
-const heatmapChart = new Chart(
-    document.getElementById("heatmapChart"),
-    {
-        type: "bar",
-
-        data: {
-            labels: nutritionData.map(item => item.diet),
-
-            datasets: [
-                {
-                    label: "Protein",
-                    data: nutritionData.map(item => item.protein)
-                },
-                {
-                    label: "Carbs",
-                    data: nutritionData.map(item => item.carbs)
-                },
-                {
-                    label: "Fat",
-                    data: nutritionData.map(item => item.fat)
-                }
-            ]
-        },
-
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: "y"
-        }
-    }
-);
-
-
-// Pie chart
-const pieChart = new Chart(
-    document.getElementById("pieChart"),
-    {
-        type: "pie",
-
-        data: {
-            labels: nutritionData.map(item => item.diet),
-
-            datasets: [
-                {
-                    label: "Recipes",
-                    data: nutritionData.map(item => item.recipes)
-                }
-            ]
-        },
-
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
-        }
-    }
-);
-
-
-// Update dataset information
-function updateMetadata() {
-
-    const startTime = performance.now();
-
-    const totalRecipes = nutritionData.reduce(
-        (total, item) => total + item.recipes,
-        0
-    );
-
-    const endTime = performance.now();
-
-    document.getElementById("totalRecipes").textContent =
-        totalRecipes;
-
-    document.getElementById("executionTime").textContent =
-        (endTime - startTime).toFixed(2) + " milliseconds";
-
-    document.getElementById("lastUpdated").textContent =
-        new Date().toLocaleString();
 }
 
+function setLoadingState(isLoading) {
+    const refreshBtn = document.getElementById("refreshButton");
+    refreshBtn.disabled = isLoading;
+    refreshBtn.textContent = isLoading ? "Loading..." : "Refresh Data";
+}
 
-// Refresh button
-document
-    .getElementById("refreshButton")
-    .addEventListener("click", function () {
+// ====== CHART RENDERING ======
+function renderCharts(filterDiet = "all") {
+    const filtered = filterDiet === "all"
+        ? nutritionData
+        : nutritionData.filter(item => item.diet.toLowerCase() === filterDiet.toLowerCase());
 
-        updateMetadata();
+    const labels = filtered.map(item => item.diet);
 
-        alert("Dashboard data refreshed");
+    // Destroy old chart instances before redrawing (avoids Chart.js canvas reuse errors)
+    [barChart, scatterChart, heatmapChart, pieChart].forEach(c => c && c.destroy());
+
+    // Bar chart — average macros by diet type
+    barChart = new Chart(document.getElementById("barChart"), {
+        type: "bar",
+        data: {
+            labels,
+            datasets: [
+                { label: "Protein (g)", data: filtered.map(i => i.protein) },
+                { label: "Carbs (g)", data: filtered.map(i => i.carbs) },
+                { label: "Fat (g)", data: filtered.map(i => i.fat) }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
     });
 
-
-// Diet filter
-document
-    .getElementById("dietFilter")
-    .addEventListener("change", function () {
-
-        const selectedDiet =
-            this.options[this.selectedIndex].text;
-
-        document.getElementById("selectedDiet").textContent =
-            selectedDiet;
-
-        console.log("Selected diet:", this.value);
+    // Scatter plot — protein vs carbs
+    scatterChart = new Chart(document.getElementById("scatterChart"), {
+        type: "scatter",
+        data: {
+            datasets: [{
+                label: "Protein vs Carbs",
+                data: filtered.map(i => ({ x: i.carbs, y: i.protein })),
+                pointRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { title: { display: true, text: "Carbs (g)" } },
+                y: { title: { display: true, text: "Protein (g)" } }
+            }
+        }
     });
 
-
-// Search input
-document
-    .getElementById("searchInput")
-    .addEventListener("input", function () {
-
-        console.log("Searching for:", this.value);
+    // Heatmap-style horizontal bar — same macros, different view
+    heatmapChart = new Chart(document.getElementById("heatmapChart"), {
+        type: "bar",
+        data: {
+            labels,
+            datasets: [
+                { label: "Protein (g)", data: filtered.map(i => i.protein) },
+                { label: "Carbs (g)", data: filtered.map(i => i.carbs) },
+                { label: "Fat (g)", data: filtered.map(i => i.fat) }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, indexAxis: "y" }
     });
 
+    // Pie chart — macro composition for the first diet in the filtered set
+    const pieTarget = filtered[0];
+    pieChart = new Chart(document.getElementById("pieChart"), {
+        type: "pie",
+        data: {
+            labels: ["Protein", "Carbs", "Fat"],
+            datasets: [{
+                label: pieTarget ? `${pieTarget.diet} macro split` : "Macro split",
+                data: pieTarget ? [pieTarget.protein, pieTarget.carbs, pieTarget.fat] : [0, 0, 0]
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+}
 
-// Nutritional insights button
-document
-    .getElementById("insightsButton")
-    .addEventListener("click", function () {
+// ====== METADATA DISPLAY ======
+function updateMetadata() {
+    document.getElementById("totalRecipes").textContent =
+        lastMetadata.row_count ?? "N/A";
 
-        alert("Nutritional insights will be loaded from the API");
+    document.getElementById("executionTime").textContent =
+        (lastMetadata.execution_time_ms ?? "N/A") + " ms";
+
+    document.getElementById("lastUpdated").textContent =
+        lastMetadata.generated_at_utc
+            ? new Date(lastMetadata.generated_at_utc).toLocaleString()
+            : new Date().toLocaleString();
+}
+
+// ====== FILTER DROPDOWN (populated dynamically from real diet types) ======
+function populateDietFilter() {
+    const select = document.getElementById("dietFilter");
+    const current = select.value;
+    select.innerHTML = '<option value="all">All Diet Types</option>';
+
+    [...new Set(nutritionData.map(i => i.diet))].forEach(diet => {
+        const opt = document.createElement("option");
+        opt.value = diet;
+        opt.textContent = diet;
+        select.appendChild(opt);
     });
 
+    select.value = current || "all";
+}
 
-// Recipes button
-document
-    .getElementById("recipesButton")
-    .addEventListener("click", function () {
+// ====== EVENT LISTENERS ======
+document.getElementById("refreshButton").addEventListener("click", fetchNutritionData);
 
-        alert("Recipes will be loaded from the API");
-    });
-
-
-// Clusters button
-document
-    .getElementById("clustersButton")
-    .addEventListener("click", function () {
-
-        alert("Clusters will be loaded from the API");
-    });
-
-
-// Previous page button
-document
-    .getElementById("previousButton")
-    .addEventListener("click", function () {
-
-        console.log("Previous page");
-    });
-
-
-// Next page button
-document
-    .getElementById("nextButton")
-    .addEventListener("click", function () {
-
-        console.log("Next page");
-    });
-
-
-// Page number buttons
-const pageButtons =
-    document.querySelectorAll(".page-button");
-
-pageButtons.forEach(function (button) {
-
-    button.addEventListener("click", function () {
-
-        pageButtons.forEach(function (pageButton) {
-            pageButton.classList.remove("active-page");
-        });
-
-        this.classList.add("active-page");
-
-        console.log("Selected page:", this.textContent);
-    });
+document.getElementById("dietFilter").addEventListener("change", function () {
+    const selectedText = this.options[this.selectedIndex].text;
+    document.getElementById("selectedDiet").textContent = selectedText;
+    renderCharts(this.value);
 });
 
-
-// Load information when the page opens
-updateMetadata();
+// Load real data when the page opens
+fetchNutritionData();
