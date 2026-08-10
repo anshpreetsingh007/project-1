@@ -6,3 +6,5 @@ __pycache__/
 bin/
 obj/
 simulated_nosql/
+auth/node_modules/
+.vscode/
