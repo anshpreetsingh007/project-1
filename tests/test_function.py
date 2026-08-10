@@ -64,6 +64,20 @@ class TestProcessNutritionalData:
         assert result == "Data processed successfully"
 
     @patch("function.BlobServiceClient")
+    def test_uses_project1grp7blob_container(self, mock_blob_cls, tmp_path, monkeypatch):
+        """The local pipeline should read from the same blob container used by the Azure function workflow."""
+        monkeypatch.chdir(tmp_path)
+        mock_blob_cls.from_connection_string.return_value = _make_mock_blob_client(
+            MOCK_CSV.encode()
+        )
+
+        from function import process_nutritional_data_from_azurite
+        process_nutritional_data_from_azurite()
+
+        service_client = mock_blob_cls.from_connection_string.return_value
+        service_client.get_container_client.assert_called_with("project1grp7blob")
+
+    @patch("function.BlobServiceClient")
     def test_creates_results_json(self, mock_blob_cls, tmp_path, monkeypatch):
         """Function must write simulated_nosql/results.json."""
         monkeypatch.chdir(tmp_path)

@@ -8,12 +8,15 @@ CONNECTION_STRING = os.environ.get(
     "AZURE_STORAGE_CONNECTION_STRING",
     "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;"
 )
+CONTAINER_NAME = "project1grp7blob"
+BLOB_NAME = "All_Diets.csv"
+
 
 def process_nutritional_data_from_azurite():
     blob_service_client = BlobServiceClient.from_connection_string(CONNECTION_STRING)
 
-    container_name = "datasets"
-    blob_name = "All_Diets.csv"
+    container_name = CONTAINER_NAME
+    blob_name = BLOB_NAME
 
     container_client = blob_service_client.get_container_client(container_name)
     blob_client = container_client.get_blob_client(blob_name)
