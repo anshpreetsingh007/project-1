@@ -7,7 +7,7 @@ connection_string = os.environ.get(
 )
 
 blob_service_client = BlobServiceClient.from_connection_string(connection_string)
-container_client = blob_service_client.get_container_client("datasets")
+container_client = blob_service_client.get_container_client("project1grp7blob")
 
 with open("All_Diets.csv", "rb") as data:
     container_client.upload_blob(

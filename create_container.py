@@ -6,7 +6,7 @@ connection_string = os.environ.get(
     "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;"
 )
 
-container_name = "datasets"
+container_name = "project1grp7blob"
 blob_service_client = BlobServiceClient.from_connection_string(connection_string)
 
 try:

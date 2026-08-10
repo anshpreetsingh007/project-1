@@ -10,11 +10,11 @@
 set -euo pipefail
 
 # ---- 1. Variables — edit to be unique ----
-RESOURCE_GROUP="diet-analysis-rg"
-LOCATION="eastus"
-STORAGE_ACCOUNT="dietanalysisstore$RANDOM"   # must be globally unique, lowercase, no dashes
-CONTAINER_NAME="datasets"
-FUNCTION_APP="diet-analysis-func-$RANDOM"    # must be globally unique
+RESOURCE_GROUP="project1-svenno2026"
+LOCATION="eastus2"
+STORAGE_ACCOUNT="project1svennoblob"
+CONTAINER_NAME="project1grp7blob"
+FUNCTION_APP="project1-grp7-func"   # must be globally unique
 PLAN_NAME="diet-analysis-plan"
 
 echo "Resource group : $RESOURCE_GROUP"
