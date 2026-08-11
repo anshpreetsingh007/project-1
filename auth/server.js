@@ -76,17 +76,69 @@ passport.use(
             callbackURL: "http://localhost:3000/auth/google/callback"
         },
 
-        (accessToken, refreshToken, profile, done) => {
+        async (accessToken, refreshToken, profile, done) => {
 
-            const googleUser = {
-                id: profile.id,
-                name: profile.displayName,
-                email: profile.emails
-                    ? profile.emails[0].value
-                    : ""
-            };
+            try {
 
-            return done(null, googleUser);
+                const email = profile.emails
+                    ? profile.emails[0].value.toLowerCase()
+                    : "";
+
+                const googleUser = {
+                    id: profile.id,
+                    name: profile.displayName,
+                    email: email
+                };
+
+                // Save Google user in Azure Table Storage
+                if (email) {
+
+                    try {
+
+                        await tableClient.getEntity(
+                            "users",
+                            email
+                        );
+
+                    } catch (error) {
+
+                        if (error.statusCode === 404) {
+
+                            const newGoogleUser = {
+                                partitionKey: "users",
+                                rowKey: email,
+                                name: profile.displayName,
+                                email: email,
+                                googleId: profile.id,
+                                authProvider: "google"
+                            };
+
+                            await tableClient.createEntity(
+                                newGoogleUser
+                            );
+
+                            console.log(
+                                "Google user saved in Azure Table Storage:",
+                                email
+                            );
+
+                        } else {
+                            throw error;
+                        }
+                    }
+                }
+
+                return done(null, googleUser);
+
+            } catch (error) {
+
+                console.error(
+                    "Google login error:",
+                    error
+                );
+
+                return done(error, null);
+            }
         }
     )
 );
