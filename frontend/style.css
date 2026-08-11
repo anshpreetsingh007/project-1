@@ -47,17 +47,18 @@ header h1 {
 }
 
 #logoutButton {
-    background-color: #ffffff;
-    color: #173b80;
-    border: 1px solid #ffffff;
+    background-color: #a61b1b;
+    color: #ffffff;
+    border: 1px solid #a61b1b;
     padding: 7px 12px;
     border-radius: 4px;
     cursor: pointer;
 }
 
 #logoutButton:hover {
-    background-color: #e6e6e6;
-    color: #173b80;
+    background-color: #7f1515;
+    color: #ffffff;
+    border-color: #7f1515;
 }
 
 
