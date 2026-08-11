@@ -7,6 +7,7 @@ const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const session = require("express-session");
 const { CosmosClient } = require("@azure/cosmos");
+const { TableClient } = require("@azure/data-tables");
 
 require("dotenv").config();
 
@@ -35,6 +36,13 @@ if (process.env.COSMOS_ENDPOINT && process.env.COSMOS_KEY) {
 }
 
 
+// Azure Table Storage connection
+const tableClient = TableClient.fromConnectionString(
+    process.env.AZURE_TABLE_CONNECTION_STRING,
+    process.env.AZURE_TABLE_NAME
+);
+
+
 // Allow frontend requests
 app.use(
     cors({
@@ -57,11 +65,6 @@ app.use(
 
 app.use(passport.initialize());
 app.use(passport.session());
-
-
-// Temporary user list
-// We will replace this with Cosmos DB
-const users = [];
 
 
 // Google login setup
@@ -108,101 +111,168 @@ app.get("/", (req, res) => {
 // Register user
 app.post("/register", async (req, res) => {
 
-    const { name, email, password } = req.body;
+    try {
 
-    // Check if fields are missing
-    if (!name || !email || !password) {
-        return res.status(400).json({
-            message: "Please complete all fields"
+        const { name, email, password } = req.body;
+
+        // Check if fields are missing
+        if (!name || !email || !password) {
+            return res.status(400).json({
+                message: "Please complete all fields"
+            });
+        }
+
+        const normalizedEmail = email.toLowerCase();
+
+        // Email is used as the RowKey
+        const rowKey = normalizedEmail;
+
+        // Check if email contains invalid Table Storage key characters
+        if (
+            rowKey.includes("/") ||
+            rowKey.includes("\\") ||
+            rowKey.includes("#") ||
+            rowKey.includes("?")
+        ) {
+            return res.status(400).json({
+                message: "Email contains unsupported characters"
+            });
+        }
+
+        // Check if user already exists
+        try {
+
+            await tableClient.getEntity(
+                "users",
+                rowKey
+            );
+
+            return res.status(400).json({
+                message: "User already exists"
+            });
+
+        } catch (error) {
+
+            if (error.statusCode !== 404) {
+                throw error;
+            }
+        }
+
+        // Hash the password
+        const hashedPassword =
+            await bcrypt.hash(password, 10);
+
+        // Create user profile
+        const newUser = {
+            partitionKey: "users",
+            rowKey: rowKey,
+            name: name,
+            email: normalizedEmail,
+            passwordHash: hashedPassword,
+            authProvider: "email"
+        };
+
+        // Save user in Azure Table Storage
+        await tableClient.createEntity(newUser);
+
+        // Save safe user information in session
+        req.session.user = {
+            id: rowKey,
+            name: name,
+            email: normalizedEmail
+        };
+
+        console.log(
+            "Registered user in Azure Table Storage:",
+            normalizedEmail
+        );
+
+        res.status(201).json({
+            message: "User registered successfully",
+            user: req.session.user
+        });
+
+    } catch (error) {
+
+        console.error("Register error:", error);
+
+        res.status(500).json({
+            message: "Could not register user"
         });
     }
-
-    // Check if email already exists
-    const existingUser = users.find(
-        user => user.email === email
-    );
-
-    if (existingUser) {
-        return res.status(400).json({
-            message: "User already exists"
-        });
-    }
-
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create new user
-    const newUser = {
-        id: users.length + 1,
-        name: name,
-        email: email,
-        passwordHash: hashedPassword
-    };
-
-    users.push(newUser);
-
-    // Save safe user information in session
-    req.session.user = {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email
-    };
-
-    console.log("Registered user:", newUser);
-
-    res.status(201).json({
-        message: "User registered successfully",
-        user: req.session.user
-    });
 });
 
 
 // Login user
 app.post("/login", async (req, res) => {
 
-    const { email, password } = req.body;
+    try {
 
-    // Check if fields are missing
-    if (!email || !password) {
-        return res.status(400).json({
-            message: "Please enter email and password"
+        const { email, password } = req.body;
+
+        // Check if fields are missing
+        if (!email || !password) {
+            return res.status(400).json({
+                message: "Please enter email and password"
+            });
+        }
+
+        const normalizedEmail = email.toLowerCase();
+
+        let user;
+
+        // Find user in Azure Table Storage
+        try {
+
+            user = await tableClient.getEntity(
+                "users",
+                normalizedEmail
+            );
+
+        } catch (error) {
+
+            if (error.statusCode === 404) {
+                return res.status(401).json({
+                    message: "Invalid email or password"
+                });
+            }
+
+            throw error;
+        }
+
+        // Compare password with saved hash
+        const passwordMatch =
+            await bcrypt.compare(
+                password,
+                user.passwordHash
+            );
+
+        if (!passwordMatch) {
+            return res.status(401).json({
+                message: "Invalid email or password"
+            });
+        }
+
+        // Save safe user information in session
+        req.session.user = {
+            id: user.rowKey,
+            name: user.name,
+            email: user.email
+        };
+
+        res.json({
+            message: "Login successful",
+            user: req.session.user
+        });
+
+    } catch (error) {
+
+        console.error("Login error:", error);
+
+        res.status(500).json({
+            message: "Could not login"
         });
     }
-
-    // Find user
-    const user = users.find(
-        user => user.email === email
-    );
-
-    if (!user) {
-        return res.status(401).json({
-            message: "Invalid email or password"
-        });
-    }
-
-    // Compare password with saved hash
-    const passwordMatch = await bcrypt.compare(
-        password,
-        user.passwordHash
-    );
-
-    if (!passwordMatch) {
-        return res.status(401).json({
-            message: "Invalid email or password"
-        });
-    }
-
-    // Save safe user information in session
-    req.session.user = {
-        id: user.id,
-        name: user.name,
-        email: user.email
-    };
-
-    res.json({
-        message: "Login successful",
-        user: req.session.user
-    });
 });
 
 
@@ -234,7 +304,8 @@ app.get(
 // Check login status
 app.get("/auth/status", (req, res) => {
 
-    const user = req.user || req.session.user;
+    const user =
+        req.user || req.session.user;
 
     if (!user) {
         return res.json({
@@ -267,13 +338,9 @@ app.post("/logout", (req, res) => {
 });
 
 
-// Show users for testing
-app.get("/users", (req, res) => {
-    res.json(users);
-});
-
-
 // Start server
 app.listen(PORT, () => {
-    console.log(`Auth server running on http://localhost:${PORT}`);
+    console.log(
+        `Auth server running on http://localhost:${PORT}`
+    );
 });

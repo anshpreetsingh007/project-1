@@ -12,6 +12,7 @@
   "type": "commonjs",
   "dependencies": {
     "@azure/cosmos": "^4.10.0",
+    "@azure/data-tables": "^13.3.2",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
