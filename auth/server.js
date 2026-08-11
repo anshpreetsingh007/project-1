@@ -3,6 +3,10 @@
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const session = require("express-session");
+require("dotenv").config();
 
 const app = express();
 const PORT = 3000;
@@ -11,10 +15,54 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
+// Session setup
+app.use(
+    session({
+        secret: "student-project-secret",
+        resave: false,
+        saveUninitialized: false
+    })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 
 // Temporary user list
 // Later we will replace this with a real database
 const users = [];
+
+
+// Google login setup
+passport.use(
+    new GoogleStrategy(
+        {
+            clientID: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            callbackURL: "http://localhost:3000/auth/google/callback"
+        },
+
+        (accessToken, refreshToken, profile, done) => {
+
+            const googleUser = {
+                id: profile.id,
+                name: profile.displayName
+            };
+
+            return done(null, googleUser);
+        }
+    )
+);
+
+
+// Save user in session
+passport.serializeUser((user, done) => {
+    done(null, user);
+});
+
+passport.deserializeUser((user, done) => {
+    done(null, user);
+});
 
 
 // Test route
@@ -79,7 +127,7 @@ app.post("/login", async (req, res) => {
         });
     }
 
-    // Find user by email
+    // Find user
     const user = users.find(
         user => user.email === email
     );
@@ -108,6 +156,31 @@ app.post("/login", async (req, res) => {
         email: user.email
     });
 });
+
+
+// Start Google login
+app.get(
+    "/auth/google",
+    passport.authenticate("google", {
+        scope: ["profile", "email"]
+    })
+);
+
+
+// Google callback
+app.get(
+    "/auth/google/callback",
+
+    passport.authenticate("google", {
+        failureRedirect: "/"
+    }),
+
+    (req, res) => {
+        res.send(
+            `Google login successful. Welcome ${req.user.name}`
+        );
+    }
+);
 
 
 // Show users for testing
