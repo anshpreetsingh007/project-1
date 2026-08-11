@@ -1,64 +1,117 @@
-/* General page style */
+/* =========================================
+   General page style
+   ========================================= */
+
 body {
     margin: 0;
     font-family: Arial, sans-serif;
     background-color: #f2f2f2;
+    color: #222222;
 }
 
-/* Header */
+
+/* =========================================
+   Dashboard header
+   ========================================= */
+
 header {
-    background-color: #3367d6;
-    color: white;
+    background-color: #244fa8;
+    color: #ffffff;
     padding: 15px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 header h1 {
     margin: 0;
     font-size: 26px;
+    color: #ffffff;
 }
 
-/* Main content */
+
+/* =========================================
+   User info in dashboard
+   ========================================= */
+
+.user-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#loggedUser {
+    color: #ffffff;
+    font-weight: bold;
+}
+
+#logoutButton {
+    background-color: #ffffff;
+    color: #173b80;
+    border: 1px solid #ffffff;
+    padding: 7px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#logoutButton:hover {
+    background-color: #e6e6e6;
+    color: #173b80;
+}
+
+
+/* =========================================
+   Main dashboard content
+   ========================================= */
+
 main {
     width: 90%;
     margin: 20px auto;
 }
 
-/* Charts layout */
+
+/* =========================================
+   Charts
+   ========================================= */
+
 .charts-container {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 20px;
 }
 
-/* Chart box */
 .chart-card {
-    background-color: white;
+    background-color: #ffffff;
     padding: 15px;
-    border: 1px solid lightgray;
+    border: 1px solid #b5b5b5;
     border-radius: 6px;
     min-width: 0;
     height: 330px;
 }
 
-/* Chart title */
 .chart-card h3 {
     margin-top: 0;
     margin-bottom: 5px;
+    color: #222222;
 }
 
-/* Chart description */
 .chart-card p {
     margin-top: 0;
     margin-bottom: 10px;
+    color: #333333;
 }
 
-/* Chart size */
 .chart-card canvas {
     width: 100% !important;
     height: 240px !important;
 }
 
-/* Filters */
+
+/* =========================================
+   Filters
+   ========================================= */
+
 .filters-section {
     margin-top: 30px;
 }
@@ -70,15 +123,30 @@ main {
     margin-right: 8px;
 }
 
-/* Refresh button */
+.filters-section input,
+.filters-section select {
+    color: #222222;
+    background-color: #ffffff;
+    border: 1px solid #777777;
+}
+
 .filters-section button {
-    background-color: #3367d6;
-    color: white;
+    background-color: #244fa8;
+    color: #ffffff;
     border: none;
+    border-radius: 4px;
     cursor: pointer;
 }
 
-/* API section */
+.filters-section button:hover {
+    background-color: #193b80;
+}
+
+
+/* =========================================
+   API section
+   ========================================= */
+
 .api-section {
     margin-top: 30px;
 }
@@ -86,25 +154,41 @@ main {
 .api-section button {
     padding: 9px;
     margin-right: 8px;
-    color: white;
+    color: #ffffff;
     border: none;
+    border-radius: 4px;
     cursor: pointer;
 }
 
-/* Different button colors */
 #insightsButton {
-    background-color: #3367d6;
+    background-color: #244fa8;
 }
 
 #recipesButton {
-    background-color: #2f9e6f;
+    background-color: #176b4b;
 }
 
 #clustersButton {
-    background-color: #7a45c7;
+    background-color: #6333a5;
 }
 
-/* Pagination section */
+#insightsButton:hover {
+    background-color: #193b80;
+}
+
+#recipesButton:hover {
+    background-color: #105039;
+}
+
+#clustersButton:hover {
+    background-color: #48257a;
+}
+
+
+/* =========================================
+   Pagination
+   ========================================= */
+
 .pagination-section {
     margin-top: 30px;
 }
@@ -116,43 +200,219 @@ main {
 
 .pagination-buttons button {
     padding: 8px 12px;
-    border: 1px solid lightgray;
-    background-color: white;
+    border: 1px solid #777777;
+    background-color: #ffffff;
+    color: #222222;
     cursor: pointer;
 }
 
-/* Current page */
 .pagination-buttons .active-page {
-    background-color: #3367d6;
-    color: white;
+    background-color: #244fa8;
+    color: #ffffff;
+    border-color: #244fa8;
 }
 
-/* Dataset information */
+
+/* =========================================
+   Dataset information
+   ========================================= */
+
 .metadata-section {
     margin-top: 30px;
-    background-color: white;
+    background-color: #ffffff;
+    color: #222222;
     padding: 15px;
-    border: 1px solid lightgray;
+    border: 1px solid #b5b5b5;
     border-radius: 6px;
 }
 
-/* Footer */
+
+/* =========================================
+   Footer
+   ========================================= */
+
 footer {
-    background-color: #3367d6;
-    color: white;
+    background-color: #244fa8;
+    color: #ffffff;
     text-align: center;
     padding: 12px;
     margin-top: 30px;
 }
 
-.api-section button,
-.filters-section button {
 
+/* =========================================
+   Authentication header
+   ========================================= */
+
+.auth-header {
+    text-align: center;
+    background-color: #244fa8;
+    color: #ffffff;
+    padding: 25px;
+
+    display: block;
+}
+
+.auth-header h1 {
+    margin: 0;
+    font-size: 28px;
+    color: #ffffff;
+}
+
+.auth-header p {
+    margin: 8px 0 0;
+    color: #ffffff;
+}
+
+
+/* =========================================
+   Login and register pages
+   ========================================= */
+
+.auth-main {
+    width: 100%;
+    margin: 0;
+}
+
+.auth-container {
+    width: 380px;
+    margin: 60px auto;
+    background-color: #ffffff;
+    padding: 30px;
+    border: 1px solid #b5b5b5;
+    border-radius: 8px;
+}
+
+.auth-container h2 {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 5px;
+    color: #222222;
+}
+
+.auth-text {
+    text-align: center;
+    color: #333333;
+    margin-bottom: 25px;
+}
+
+
+/* =========================================
+   Authentication forms
+   ========================================= */
+
+.auth-container label {
+    display: block;
+    margin-bottom: 6px;
+    color: #222222;
+    font-weight: bold;
+}
+
+.auth-container input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 18px;
+    box-sizing: border-box;
+    background-color: #ffffff;
+    color: #222222;
+    border: 1px solid #777777;
     border-radius: 4px;
 }
 
-/* Mobile layout */
+.auth-container input::placeholder {
+    color: #595959;
+}
+
+
+/* =========================================
+   Authentication buttons
+   ========================================= */
+
+.auth-container button {
+    width: 100%;
+    padding: 11px;
+    background-color: #244fa8;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.auth-container button:hover {
+    background-color: #193b80;
+}
+
+
+/* =========================================
+   OR divider
+   ========================================= */
+
+.auth-divider {
+    text-align: center;
+    margin: 20px 0;
+    border-bottom: 1px solid #777777;
+    line-height: 1px;
+}
+
+.auth-divider span {
+    background-color: #ffffff;
+    padding: 0 10px;
+    color: #333333;
+}
+
+
+/* =========================================
+   Google login button
+   ========================================= */
+
+#googleLoginButton {
+    background-color: #ffffff;
+    color: #222222;
+    border: 1px solid #555555;
+}
+
+#googleLoginButton:hover {
+    background-color: #e8e8e8;
+    color: #222222;
+}
+
+
+/* =========================================
+   Authentication links
+   ========================================= */
+
+.auth-link {
+    text-align: center;
+    margin-top: 20px;
+    color: #222222;
+}
+
+.auth-container a {
+    color: #17478f;
+    font-weight: bold;
+}
+
+.auth-container a:hover {
+    color: #0d326b;
+}
+
+
+/* =========================================
+   Mobile layout
+   ========================================= */
+
 @media (max-width: 768px) {
+
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .user-area {
+        width: 100%;
+        justify-content: space-between;
+    }
 
     .charts-container {
         grid-template-columns: 1fr;
@@ -170,5 +430,20 @@ footer {
 
     .pagination-buttons {
         flex-wrap: wrap;
+    }
+
+    .auth-container {
+        width: 85%;
+        margin: 35px auto;
+        box-sizing: border-box;
+    }
+
+    .auth-header {
+        padding: 20px;
+        text-align: center;
+    }
+
+    .auth-header h1 {
+        font-size: 24px;
     }
 }

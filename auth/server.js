@@ -6,19 +6,50 @@ const bcrypt = require("bcrypt");
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const session = require("express-session");
+const { CosmosClient } = require("@azure/cosmos");
+
 require("dotenv").config();
 
 const app = express();
 const PORT = 3000;
 
+
+// Cosmos DB connection
+// This will be used when the Cosmos DB information is ready
+let usersContainer = null;
+
+if (process.env.COSMOS_ENDPOINT && process.env.COSMOS_KEY) {
+
+    const cosmosClient = new CosmosClient({
+        endpoint: process.env.COSMOS_ENDPOINT,
+        key: process.env.COSMOS_KEY
+    });
+
+    const database = cosmosClient.database(
+        process.env.COSMOS_DATABASE
+    );
+
+    usersContainer = database.container(
+        process.env.COSMOS_CONTAINER
+    );
+}
+
+
 // Allow frontend requests
-app.use(cors());
+app.use(
+    cors({
+        origin: true,
+        credentials: true
+    })
+);
+
 app.use(express.json());
+
 
 // Session setup
 app.use(
     session({
-        secret: "student-project-secret",
+        secret: process.env.SESSION_SECRET || "student-project-secret",
         resave: false,
         saveUninitialized: false
     })
@@ -29,7 +60,7 @@ app.use(passport.session());
 
 
 // Temporary user list
-// Later we will replace this with a real database
+// We will replace this with Cosmos DB
 const users = [];
 
 
@@ -46,7 +77,10 @@ passport.use(
 
             const googleUser = {
                 id: profile.id,
-                name: profile.displayName
+                name: profile.displayName,
+                email: profile.emails
+                    ? profile.emails[0].value
+                    : ""
             };
 
             return done(null, googleUser);
@@ -55,7 +89,7 @@ passport.use(
 );
 
 
-// Save user in session
+// Save Google user in session
 passport.serializeUser((user, done) => {
     done(null, user);
 });
@@ -107,10 +141,18 @@ app.post("/register", async (req, res) => {
 
     users.push(newUser);
 
+    // Save safe user information in session
+    req.session.user = {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email
+    };
+
     console.log("Registered user:", newUser);
 
     res.status(201).json({
-        message: "User registered successfully"
+        message: "User registered successfully",
+        user: req.session.user
     });
 });
 
@@ -150,10 +192,16 @@ app.post("/login", async (req, res) => {
         });
     }
 
-    res.json({
-        message: "Login successful",
+    // Save safe user information in session
+    req.session.user = {
+        id: user.id,
         name: user.name,
         email: user.email
+    };
+
+    res.json({
+        message: "Login successful",
+        user: req.session.user
     });
 });
 
@@ -176,11 +224,47 @@ app.get(
     }),
 
     (req, res) => {
-        res.send(
-            `Google login successful. Welcome ${req.user.name}`
+        res.redirect(
+            "http://localhost:5500/frontend/index.html"
         );
     }
 );
+
+
+// Check login status
+app.get("/auth/status", (req, res) => {
+
+    const user = req.user || req.session.user;
+
+    if (!user) {
+        return res.json({
+            loggedIn: false
+        });
+    }
+
+    res.json({
+        loggedIn: true,
+        user: {
+            name: user.name,
+            email: user.email
+        }
+    });
+});
+
+
+// Logout user
+app.post("/logout", (req, res) => {
+
+    req.logout(() => {
+
+        req.session.destroy(() => {
+
+            res.json({
+                message: "Logout successful"
+            });
+        });
+    });
+});
 
 
 // Show users for testing

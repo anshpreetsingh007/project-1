@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Register - Nutritional Insights</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header class="auth-header">
+        <h1>Nutritional Insights</h1>
+        <p>Create an account to access the dashboard</p>
+    </header>
+
+    <main class="auth-main">
+
+        <div class="auth-container">
+
+            <h2>Create Account</h2>
+
+            <p class="auth-text">
+                Enter your information below
+            </p>
+
+            <form id="registerForm">
+
+                <label for="registerName">Name</label>
+
+                <input
+                    type="text"
+                    id="registerName"
+                    placeholder="Enter your name"
+                    required
+                >
+
+                <label for="registerEmail">Email</label>
+
+                <input
+                    type="email"
+                    id="registerEmail"
+                    placeholder="Enter your email"
+                    required
+                >
+
+                <label for="registerPassword">Password</label>
+
+                <input
+                    type="password"
+                    id="registerPassword"
+                    placeholder="Create a password"
+                    required
+                >
+
+                <button type="submit">
+                    Create Account
+                </button>
+
+            </form>
+
+            <p class="auth-link">
+                Already have an account?
+                <a href="login.html">Sign In</a>
+            </p>
+
+        </div>
+
+    </main>
+
+    <script src="auth.js"></script>
+
+</body>
+
+</html>

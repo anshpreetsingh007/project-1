@@ -164,3 +164,49 @@ document.getElementById("dietFilter").addEventListener("change", function () {
 
 // Load real data when the page opens
 fetchNutritionData();
+
+// Check if user is logged in
+async function checkLogin() {
+
+    const response = await fetch(
+        "http://localhost:3000/auth/status",
+        {
+            credentials: "include"
+        }
+    );
+
+    const data = await response.json();
+
+    if (!data.loggedIn) {
+        window.location.href = "login.html";
+        return;
+    }
+
+    document.getElementById("loggedUser").textContent =
+        data.user.name;
+}
+
+
+// Logout button
+const logoutButton =
+    document.getElementById("logoutButton");
+
+if (logoutButton) {
+
+    logoutButton.addEventListener("click", async function () {
+
+        await fetch(
+            "http://localhost:3000/logout",
+            {
+                method: "POST",
+                credentials: "include"
+            }
+        );
+
+        window.location.href = "login.html";
+    });
+}
+
+
+// Check login when dashboard opens
+checkLogin();
