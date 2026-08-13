@@ -6,7 +6,7 @@ const AUTH_URL =
 
 
 const FUNCTION_BASE_URL =
-    "https://project1-grp7-functionapp-fad3bsdsh4gzcegk.eastus2-01.azurewebsites.net/api";
+    "https://project1-grp7-func.azurewebsites.net/api%22";
 
 const FUNCTION_URL = `${FUNCTION_BASE_URL}/GetNutritionData`;
 const RECIPES_URL = `${FUNCTION_BASE_URL}/GetRecipes`;
