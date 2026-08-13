@@ -187,6 +187,62 @@ main {
 
 
 /* =========================================
+   Recipe results
+   ========================================= */
+
+.recipes-section {
+    margin-top: 30px;
+}
+
+#recipeResultsSummary {
+    color: #444444;
+    margin-bottom: 12px;
+}
+
+.recipe-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+}
+
+.recipe-card {
+    background-color: #ffffff;
+    padding: 14px;
+    border: 1px solid #b5b5b5;
+    border-radius: 6px;
+}
+
+.recipe-card h4 {
+    margin: 0 0 6px;
+    color: #222222;
+    font-size: 15px;
+}
+
+.recipe-meta {
+    margin: 0 0 6px;
+    font-size: 13px;
+    color: #555555;
+    text-transform: capitalize;
+}
+
+.recipe-diet {
+    display: inline-block;
+    background-color: #eef2fb;
+    color: #244fa8;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.recipe-macros {
+    margin: 0;
+    font-size: 13px;
+    color: #333333;
+}
+
+
+/* =========================================
    Pagination
    ========================================= */
 
@@ -196,6 +252,8 @@ main {
 
 .pagination-buttons {
     display: flex;
+    align-items: center;
+    flex-wrap: wrap;
     gap: 6px;
 }
 
@@ -207,10 +265,26 @@ main {
     cursor: pointer;
 }
 
+.pagination-buttons button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .pagination-buttons .active-page {
     background-color: #244fa8;
     color: #ffffff;
     border-color: #244fa8;
+}
+
+.page-numbers {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.page-ellipsis {
+    padding: 0 4px;
+    color: #555555;
 }
 
 

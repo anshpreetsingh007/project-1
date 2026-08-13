@@ -65,8 +65,10 @@
             <input
                 type="text"
                 id="searchInput"
-                placeholder="Search by diet type"
+                placeholder="Search recipes by name or cuisine"
             >
+
+            <button id="searchButton">Search</button>
 
             <select id="dietFilter">
                 <option value="all">All Diet Types</option>
@@ -74,6 +76,7 @@
                 <option value="keto">Keto</option>
                 <option value="paleo">Paleo</option>
                 <option value="mediterranean">Mediterranean</option>
+                <option value="dash">Dash</option>
             </select>
 
             <button id="refreshButton">Refresh Data</button>
@@ -99,15 +102,25 @@
 
         </section>
 
-        <!-- Simple pagination -->
+        <!-- Recipe search results -->
+        <section class="recipes-section">
+
+            <h2>Recipe Results</h2>
+
+            <p id="recipeResultsSummary">Loading recipes...</p>
+
+            <div id="recipeList" class="recipe-list"></div>
+
+        </section>
+
+        <!-- Pagination -->
         <section class="pagination-section">
 
             <h2>Pagination</h2>
 
-            <div class="pagination-buttons">
+            <div class="pagination-buttons" id="paginationButtons">
                 <button id="previousButton">Previous</button>
-                <button class="page-button active-page">1</button>
-                <button class="page-button">2</button>
+                <span id="pageNumbers" class="page-numbers"></span>
                 <button id="nextButton">Next</button>
             </div>
 

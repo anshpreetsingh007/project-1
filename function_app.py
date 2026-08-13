@@ -22,6 +22,12 @@ COSMOS_DATABASE = os.environ.get("COSMOS_DATABASE", "DietAnalysisDB")
 COSMOS_CONTAINER = os.environ.get("COSMOS_CONTAINER", "NutritionCache")
 CACHE_DOC_ID = "nutrition_summary"
 
+RECIPE_COLUMNS = ["Diet_type", "Recipe_name", "Cuisine_type", "Protein(g)", "Carbs(g)", "Fat(g)"]
+DEFAULT_PAGE_SIZE = 12
+MAX_PAGE_SIZE = 100
+
+_recipe_cache = {"etag": None, "df": None}
+
 
 def _get_blob_connection_string() -> str:
     conn_str = os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
@@ -131,6 +137,129 @@ def _process_and_cache(reason: str) -> dict:
         generation_time_ms,
     )
     return cache_doc
+
+
+def _load_recipes_dataframe() -> pd.DataFrame:
+    """Load the cleaned recipe list, reusing the in-memory cache when the
+    cleaned blob hasn't changed since the last request on this instance."""
+    blob_service_client = BlobServiceClient.from_connection_string(
+        _get_blob_connection_string()
+    )
+    container_client = blob_service_client.get_container_client(CONTAINER_NAME)
+    blob_client = container_client.get_blob_client(CLEANED_BLOB_NAME)
+
+    try:
+        properties = blob_client.get_blob_properties()
+        current_etag = properties.etag
+    except Exception:
+        current_etag = None
+
+    if (
+        current_etag is not None
+        and _recipe_cache["etag"] == current_etag
+        and _recipe_cache["df"] is not None
+    ):
+        return _recipe_cache["df"]
+
+    # Cache miss (cold instance, or the cleaned blob changed): download and parse.
+    try:
+        raw_bytes = blob_client.download_blob().readall()
+        df = pd.read_csv(io.BytesIO(raw_bytes))
+    except Exception:
+        # Cleaned blob not ready yet (e.g. very first run before the blob
+        # trigger has fired) - fall back to cleaning the raw file on the fly.
+        raw_container_client = blob_service_client.get_container_client(CONTAINER_NAME)
+        raw_bytes = raw_container_client.get_blob_client(BLOB_NAME).download_blob().readall()
+        df = _clean_dataframe(pd.read_csv(io.BytesIO(raw_bytes)))
+        current_etag = None
+
+    df = df[RECIPE_COLUMNS].reset_index(drop=True)
+    df.insert(0, "id", df.index)
+
+    _recipe_cache["etag"] = current_etag
+    _recipe_cache["df"] = df
+    return df
+
+
+def _json_response(payload: dict, status_code: int = 200) -> func.HttpResponse:
+    return func.HttpResponse(
+        json.dumps(payload),
+        status_code=status_code,
+        mimetype="application/json",
+        headers={"Access-Control-Allow-Origin": "*"},
+    )
+
+
+@app.route(route="GetRecipes", methods=["GET", "OPTIONS"])
+def get_recipes(req: func.HttpRequest) -> func.HttpResponse:
+    """Data interaction API: filter by diet type, keyword search across recipe
+    name / cuisine, and paginate the results."""
+    logging.info("GetRecipes triggered.")
+    start_time = time.perf_counter()
+
+    if req.method == "OPTIONS":
+        return func.HttpResponse(status_code=204, headers={"Access-Control-Allow-Origin": "*"})
+
+    try:
+        diet = (req.params.get("diet") or "").strip()
+        search = (req.params.get("search") or "").strip()
+
+        try:
+            page = max(1, int(req.params.get("page", 1)))
+        except (TypeError, ValueError):
+            page = 1
+
+        try:
+            page_size = int(req.params.get("page_size", DEFAULT_PAGE_SIZE))
+        except (TypeError, ValueError):
+            page_size = DEFAULT_PAGE_SIZE
+        page_size = min(max(1, page_size), MAX_PAGE_SIZE)
+
+        df = _load_recipes_dataframe()
+        filtered = df
+
+        if diet and diet.lower() != "all":
+            filtered = filtered[filtered["Diet_type"].str.lower() == diet.lower()]
+
+        if search:
+            keyword = search.lower()
+            name_match = filtered["Recipe_name"].str.lower().str.contains(keyword, na=False)
+            cuisine_match = filtered["Cuisine_type"].str.lower().str.contains(keyword, na=False)
+            filtered = filtered[name_match | cuisine_match]
+
+        total_items = int(len(filtered))
+        total_pages = max(1, -(-total_items // page_size))  # ceil division
+        page = min(page, total_pages)
+
+        offset = (page - 1) * page_size
+        page_df = filtered.iloc[offset: offset + page_size]
+
+        elapsed_ms = round((time.perf_counter() - start_time) * 1000, 2)
+
+        payload = {
+            "status": "success",
+            "data": page_df.to_dict(orient="records"),
+            "pagination": {
+                "page": page,
+                "page_size": page_size,
+                "total_items": total_items,
+                "total_pages": total_pages,
+            },
+            "filters": {
+                "diet": diet or "all",
+                "search": search,
+            },
+            "metadata": {
+                "execution_time_ms": elapsed_ms,
+                "served_from_cache": _recipe_cache["etag"] is not None,
+            },
+        }
+
+        return _json_response(payload)
+
+    except Exception as exc:
+        logging.exception("GetRecipes failed")
+        return _json_response({"status": "error", "message": str(exc)}, status_code=500)
 
 
 @app.function_name(name="CleanDataOnUpload")

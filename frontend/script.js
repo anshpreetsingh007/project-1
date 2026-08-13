@@ -1,5 +1,8 @@
-const FUNCTION_URL =
-    "https://project1-grp7-functionapp-fad3bsdsh4gzcegk.eastus2-01.azurewebsites.net/api/GetNutritionData";
+const FUNCTION_BASE_URL =
+    "https://project1-grp7-functionapp-fad3bsdsh4gzcegk.eastus2-01.azurewebsites.net/api";
+
+const FUNCTION_URL = `${FUNCTION_BASE_URL}/GetNutritionData`;
+const RECIPES_URL = `${FUNCTION_BASE_URL}/GetRecipes`;
 
 let nutritionData = [];
 let lastMetadata = {};
@@ -8,6 +11,16 @@ let barChart;
 let scatterChart;
 let heatmapChart;
 let pieChart;
+
+// ====== RECIPE SEARCH / FILTER / PAGINATION STATE ======
+const PAGE_SIZE = 12;
+
+let recipeState = {
+    diet: "all",
+    search: "",
+    page: 1,
+    totalPages: 1
+};
 
 
 // ====== FETCH DATA FROM AZURE FUNCTION ======
@@ -336,6 +349,160 @@ function populateDietFilter() {
 }
 
 
+// ====== FETCH RECIPES (filter + keyword search + pagination) ======
+async function fetchRecipes() {
+
+    const list = document.getElementById("recipeList");
+    const summary = document.getElementById("recipeResultsSummary");
+
+    summary.textContent = "Loading recipes...";
+
+    try {
+
+        const params = new URLSearchParams({
+            diet: recipeState.diet,
+            search: recipeState.search,
+            page: recipeState.page,
+            page_size: PAGE_SIZE
+        });
+
+        const response = await fetch(`${RECIPES_URL}?${params.toString()}`);
+
+        if (!response.ok) {
+            throw new Error(
+                `Server responded with status ${response.status}`
+            );
+        }
+
+        const payload = await response.json();
+
+        if (payload.status !== "success") {
+            throw new Error(
+                payload.message || "Unknown API error"
+            );
+        }
+
+        recipeState.page = payload.pagination.page;
+        recipeState.totalPages = payload.pagination.total_pages;
+
+        renderRecipeList(payload.data);
+        renderPagination();
+
+        summary.textContent =
+            payload.pagination.total_items === 0
+                ? "No recipes match your filters."
+                : `Showing ${payload.data.length} of ${payload.pagination.total_items} recipes`
+                    + (recipeState.diet !== "all" ? ` · Diet: ${recipeState.diet}` : "")
+                    + (recipeState.search ? ` · Search: "${recipeState.search}"` : "");
+
+    } catch (err) {
+
+        console.error("Failed to fetch recipes:", err);
+
+        summary.textContent =
+            "Could not load recipes: " + err.message;
+
+        list.innerHTML = "";
+    }
+}
+
+
+// ====== RENDER RECIPE LIST ======
+function renderRecipeList(recipes) {
+
+    const list = document.getElementById("recipeList");
+
+    list.innerHTML = "";
+
+    recipes.forEach(recipe => {
+
+        const card = document.createElement("div");
+        card.className = "recipe-card";
+
+        card.innerHTML = `
+            <h4>${recipe.Recipe_name}</h4>
+            <p class="recipe-meta">
+                <span class="recipe-diet">${recipe.Diet_type}</span>
+                &middot; ${recipe.Cuisine_type}
+            </p>
+            <p class="recipe-macros">
+                Protein: ${recipe["Protein(g)"]}g &middot;
+                Carbs: ${recipe["Carbs(g)"]}g &middot;
+                Fat: ${recipe["Fat(g)"]}g
+            </p>
+        `;
+
+        list.appendChild(card);
+    });
+}
+
+
+// ====== RENDER PAGINATION CONTROLS ======
+function renderPagination() {
+
+    const pageNumbers = document.getElementById("pageNumbers");
+    const previousButton = document.getElementById("previousButton");
+    const nextButton = document.getElementById("nextButton");
+
+    pageNumbers.innerHTML = "";
+
+    const current = recipeState.page;
+    const total = recipeState.totalPages;
+
+    // Show a small window of page buttons around the current page
+    const windowSize = 2;
+    let start = Math.max(1, current - windowSize);
+    let end = Math.min(total, current + windowSize);
+
+    if (start > 1) {
+        pageNumbers.appendChild(makePageButton(1));
+
+        if (start > 2) {
+            const ellipsis = document.createElement("span");
+            ellipsis.textContent = "...";
+            ellipsis.className = "page-ellipsis";
+            pageNumbers.appendChild(ellipsis);
+        }
+    }
+
+    for (let pageNum = start; pageNum <= end; pageNum++) {
+        pageNumbers.appendChild(makePageButton(pageNum));
+    }
+
+    if (end < total) {
+
+        if (end < total - 1) {
+            const ellipsis = document.createElement("span");
+            ellipsis.textContent = "...";
+            ellipsis.className = "page-ellipsis";
+            pageNumbers.appendChild(ellipsis);
+        }
+
+        pageNumbers.appendChild(makePageButton(total));
+    }
+
+    previousButton.disabled = current <= 1;
+    nextButton.disabled = current >= total;
+}
+
+
+function makePageButton(pageNum) {
+
+    const button = document.createElement("button");
+    button.textContent = pageNum;
+    button.className =
+        "page-button" +
+        (pageNum === recipeState.page ? " active-page" : "");
+
+    button.addEventListener("click", function () {
+        recipeState.page = pageNum;
+        fetchRecipes();
+    });
+
+    return button;
+}
+
+
 // ====== CHECK LOGIN ======
 async function checkLogin() {
 
@@ -433,8 +600,68 @@ document
                 selectedText;
 
             renderCharts(this.value);
+
+            // Re-run the recipe search with the new diet filter, resetting to page 1
+            recipeState.diet = this.value;
+            recipeState.page = 1;
+            fetchRecipes();
         }
     );
+
+
+// ====== KEYWORD SEARCH ======
+function runSearch() {
+
+    const searchInput =
+        document.getElementById("searchInput");
+
+    recipeState.search = searchInput.value.trim();
+    recipeState.page = 1;
+
+    fetchRecipes();
+}
+
+document
+    .getElementById("searchButton")
+    .addEventListener("click", runSearch);
+
+document
+    .getElementById("searchInput")
+    .addEventListener("keydown", function (event) {
+
+        if (event.key === "Enter") {
+            runSearch();
+        }
+    });
+
+document
+    .getElementById("recipesButton")
+    .addEventListener("click", function () {
+        recipeState.page = 1;
+        fetchRecipes();
+    });
+
+
+// ====== PAGINATION BUTTONS ======
+document
+    .getElementById("previousButton")
+    .addEventListener("click", function () {
+
+        if (recipeState.page > 1) {
+            recipeState.page -= 1;
+            fetchRecipes();
+        }
+    });
+
+document
+    .getElementById("nextButton")
+    .addEventListener("click", function () {
+
+        if (recipeState.page < recipeState.totalPages) {
+            recipeState.page += 1;
+            fetchRecipes();
+        }
+    });
 
 
 // ====== START DASHBOARD ======
@@ -445,6 +672,7 @@ async function startDashboard() {
 
     if (loggedIn) {
         fetchNutritionData();
+        fetchRecipes();
     }
 }
 
