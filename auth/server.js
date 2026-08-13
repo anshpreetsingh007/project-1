@@ -6,6 +6,7 @@ const bcrypt = require("bcrypt");
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const session = require("express-session");
+const jwt = require("jsonwebtoken");
 const { CosmosClient } = require("@azure/cosmos");
 const { TableClient } = require("@azure/data-tables");
 
@@ -26,6 +27,23 @@ const BACKEND_URL =
 
 const isProduction =
     process.env.NODE_ENV === "production";
+
+
+// Create authentication token
+function createToken(user) {
+
+    return jwt.sign(
+        {
+            id: user.id,
+            name: user.name,
+            email: user.email
+        },
+        process.env.SESSION_SECRET || "student-project-secret",
+        {
+            expiresIn: "1h"
+        }
+    );
+}
 
 
 // Cosmos DB connection
@@ -265,6 +283,9 @@ app.post("/register", async (req, res) => {
             email: normalizedEmail
         };
 
+        const token =
+            createToken(req.session.user);
+
         console.log(
             "Registered user in Azure Table Storage:",
             normalizedEmail
@@ -272,7 +293,8 @@ app.post("/register", async (req, res) => {
 
         res.status(201).json({
             message: "User registered successfully",
-            user: req.session.user
+            user: req.session.user,
+            token: token
         });
 
     } catch (error) {
@@ -343,9 +365,13 @@ app.post("/login", async (req, res) => {
             email: user.email
         };
 
+        const token =
+            createToken(req.session.user);
+
         res.json({
             message: "Login successful",
-            user: req.session.user
+            user: req.session.user,
+            token: token
         });
 
     } catch (error) {
@@ -378,13 +404,16 @@ app.get(
 
     (req, res) => {
 
+        const token =
+            createToken(req.user);
+
         if (isProduction) {
             res.redirect(
-                `${FRONTEND_URL}/`
+                `${FRONTEND_URL}/#token=${encodeURIComponent(token)}`
             );
         } else {
             res.redirect(
-                `${FRONTEND_URL}/frontend/index.html`
+                `${FRONTEND_URL}/frontend/index.html#token=${encodeURIComponent(token)}`
             );
         }
     }
@@ -394,6 +423,44 @@ app.get(
 // Check login status
 app.get("/auth/status", (req, res) => {
 
+    const authHeader =
+        req.headers.authorization;
+
+    if (
+        authHeader &&
+        authHeader.startsWith("Bearer ")
+    ) {
+
+        const token =
+            authHeader.substring(7);
+
+        try {
+
+            const decoded =
+                jwt.verify(
+                    token,
+                    process.env.SESSION_SECRET ||
+                    "student-project-secret"
+                );
+
+            return res.json({
+                loggedIn: true,
+                user: {
+                    name: decoded.name,
+                    email: decoded.email
+                }
+            });
+
+        } catch (error) {
+
+            return res.json({
+                loggedIn: false
+            });
+        }
+    }
+
+
+    // Keep existing session authentication
     const user =
         req.user || req.session.user;
 

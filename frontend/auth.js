@@ -47,6 +47,14 @@ if (registerForm) {
         alert(data.message);
 
         if (response.ok) {
+
+            if (data.token) {
+                sessionStorage.setItem(
+                    "authToken",
+                    data.token
+                );
+            }
+
             window.location.href = "index.html";
         }
     });
@@ -90,6 +98,14 @@ if (loginForm) {
         alert(data.message);
 
         if (response.ok) {
+
+            if (data.token) {
+                sessionStorage.setItem(
+                    "authToken",
+                    data.token
+                );
+            }
+
             window.location.href = "index.html";
         }
     });

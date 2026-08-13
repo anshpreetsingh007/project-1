@@ -590,10 +590,50 @@ async function checkLogin() {
 
     try {
 
+        // Get Google token from URL if present
+        const hash =
+            window.location.hash;
+
+        if (hash.startsWith("#token=")) {
+
+            const token =
+                decodeURIComponent(
+                    hash.substring(7)
+                );
+
+            sessionStorage.setItem(
+                "authToken",
+                token
+            );
+
+            // Remove token from URL
+            history.replaceState(
+                null,
+                "",
+                window.location.pathname
+            );
+        }
+
+
+        const token =
+            sessionStorage.getItem(
+                "authToken"
+            );
+
+
+        const headers = {};
+
+        if (token) {
+            headers.Authorization =
+                `Bearer ${token}`;
+        }
+
+
         const response = await fetch(
             `${AUTH_URL}/auth/status`,
             {
-                credentials: "include"
+                credentials: "include",
+                headers: headers
             }
         );
 
@@ -602,6 +642,10 @@ async function checkLogin() {
 
 
         if (!data.loggedIn) {
+
+            sessionStorage.removeItem(
+                "authToken"
+            );
 
             window.location.href =
                 "login.html";
@@ -622,6 +666,10 @@ async function checkLogin() {
         console.error(
             "Could not check login status:",
             error
+        );
+
+        sessionStorage.removeItem(
+            "authToken"
         );
 
         window.location.href =
@@ -648,6 +696,10 @@ if (logoutButton) {
                     method: "POST",
                     credentials: "include"
                 }
+            );
+
+            sessionStorage.removeItem(
+                "authToken"
             );
 
             window.location.href =
