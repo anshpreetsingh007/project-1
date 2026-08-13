@@ -1,3 +1,10 @@
+const AUTH_URL =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+        ? "http://localhost:3000"
+        : "https://project1-grp7-auth-eudpe7efbtfufhfg.eastus2-01.azurewebsites.net";
+
+
 const FUNCTION_BASE_URL =
     "https://project1-grp7-functionapp-fad3bsdsh4gzcegk.eastus2-01.azurewebsites.net/api";
 
@@ -11,6 +18,7 @@ let barChart;
 let scatterChart;
 let heatmapChart;
 let pieChart;
+
 
 // ====== RECIPE SEARCH / FILTER / PAGINATION STATE ======
 const PAGE_SIZE = 12;
@@ -366,7 +374,8 @@ async function fetchRecipes() {
             page_size: PAGE_SIZE
         });
 
-        const response = await fetch(`${RECIPES_URL}?${params.toString()}`);
+        const response =
+            await fetch(`${RECIPES_URL}?${params.toString()}`);
 
         if (!response.ok) {
             throw new Error(
@@ -382,8 +391,11 @@ async function fetchRecipes() {
             );
         }
 
-        recipeState.page = payload.pagination.page;
-        recipeState.totalPages = payload.pagination.total_pages;
+        recipeState.page =
+            payload.pagination.page;
+
+        recipeState.totalPages =
+            payload.pagination.total_pages;
 
         renderRecipeList(payload.data);
         renderPagination();
@@ -392,15 +404,23 @@ async function fetchRecipes() {
             payload.pagination.total_items === 0
                 ? "No recipes match your filters."
                 : `Showing ${payload.data.length} of ${payload.pagination.total_items} recipes`
-                    + (recipeState.diet !== "all" ? ` · Diet: ${recipeState.diet}` : "")
-                    + (recipeState.search ? ` · Search: "${recipeState.search}"` : "");
+                    + (recipeState.diet !== "all"
+                        ? ` · Diet: ${recipeState.diet}`
+                        : "")
+                    + (recipeState.search
+                        ? ` · Search: "${recipeState.search}"`
+                        : "");
 
     } catch (err) {
 
-        console.error("Failed to fetch recipes:", err);
+        console.error(
+            "Failed to fetch recipes:",
+            err
+        );
 
         summary.textContent =
-            "Could not load recipes: " + err.message;
+            "Could not load recipes: " +
+            err.message;
 
         list.innerHTML = "";
     }
@@ -410,21 +430,26 @@ async function fetchRecipes() {
 // ====== RENDER RECIPE LIST ======
 function renderRecipeList(recipes) {
 
-    const list = document.getElementById("recipeList");
+    const list =
+        document.getElementById("recipeList");
 
     list.innerHTML = "";
 
     recipes.forEach(recipe => {
 
-        const card = document.createElement("div");
+        const card =
+            document.createElement("div");
+
         card.className = "recipe-card";
 
         card.innerHTML = `
             <h4>${recipe.Recipe_name}</h4>
+
             <p class="recipe-meta">
                 <span class="recipe-diet">${recipe.Diet_type}</span>
                 &middot; ${recipe.Cuisine_type}
             </p>
+
             <p class="recipe-macros">
                 Protein: ${recipe["Protein(g)"]}g &middot;
                 Carbs: ${recipe["Carbs(g)"]}g &middot;
@@ -440,64 +465,121 @@ function renderRecipeList(recipes) {
 // ====== RENDER PAGINATION CONTROLS ======
 function renderPagination() {
 
-    const pageNumbers = document.getElementById("pageNumbers");
-    const previousButton = document.getElementById("previousButton");
-    const nextButton = document.getElementById("nextButton");
+    const pageNumbers =
+        document.getElementById("pageNumbers");
+
+    const previousButton =
+        document.getElementById("previousButton");
+
+    const nextButton =
+        document.getElementById("nextButton");
 
     pageNumbers.innerHTML = "";
 
-    const current = recipeState.page;
-    const total = recipeState.totalPages;
+    const current =
+        recipeState.page;
+
+    const total =
+        recipeState.totalPages;
 
     // Show a small window of page buttons around the current page
     const windowSize = 2;
-    let start = Math.max(1, current - windowSize);
-    let end = Math.min(total, current + windowSize);
+
+    let start =
+        Math.max(
+            1,
+            current - windowSize
+        );
+
+    let end =
+        Math.min(
+            total,
+            current + windowSize
+        );
 
     if (start > 1) {
-        pageNumbers.appendChild(makePageButton(1));
+
+        pageNumbers.appendChild(
+            makePageButton(1)
+        );
 
         if (start > 2) {
-            const ellipsis = document.createElement("span");
+
+            const ellipsis =
+                document.createElement("span");
+
             ellipsis.textContent = "...";
             ellipsis.className = "page-ellipsis";
-            pageNumbers.appendChild(ellipsis);
+
+            pageNumbers.appendChild(
+                ellipsis
+            );
         }
     }
 
-    for (let pageNum = start; pageNum <= end; pageNum++) {
-        pageNumbers.appendChild(makePageButton(pageNum));
+    for (
+        let pageNum = start;
+        pageNum <= end;
+        pageNum++
+    ) {
+        pageNumbers.appendChild(
+            makePageButton(pageNum)
+        );
     }
 
     if (end < total) {
 
         if (end < total - 1) {
-            const ellipsis = document.createElement("span");
+
+            const ellipsis =
+                document.createElement("span");
+
             ellipsis.textContent = "...";
             ellipsis.className = "page-ellipsis";
-            pageNumbers.appendChild(ellipsis);
+
+            pageNumbers.appendChild(
+                ellipsis
+            );
         }
 
-        pageNumbers.appendChild(makePageButton(total));
+        pageNumbers.appendChild(
+            makePageButton(total)
+        );
     }
 
-    previousButton.disabled = current <= 1;
-    nextButton.disabled = current >= total;
+    previousButton.disabled =
+        current <= 1;
+
+    nextButton.disabled =
+        current >= total;
 }
 
 
 function makePageButton(pageNum) {
 
-    const button = document.createElement("button");
+    const button =
+        document.createElement("button");
+
     button.textContent = pageNum;
+
     button.className =
         "page-button" +
-        (pageNum === recipeState.page ? " active-page" : "");
+        (
+            pageNum === recipeState.page
+                ? " active-page"
+                : ""
+        );
 
-    button.addEventListener("click", function () {
-        recipeState.page = pageNum;
-        fetchRecipes();
-    });
+    button.addEventListener(
+        "click",
+        function () {
+
+            recipeState.page =
+                pageNum;
+
+            fetchRecipes();
+        }
+    );
 
     return button;
 }
@@ -509,13 +591,14 @@ async function checkLogin() {
     try {
 
         const response = await fetch(
-            "http://localhost:3000/auth/status",
+            `${AUTH_URL}/auth/status`,
             {
                 credentials: "include"
             }
         );
 
-        const data = await response.json();
+        const data =
+            await response.json();
 
 
         if (!data.loggedIn) {
@@ -560,7 +643,7 @@ if (logoutButton) {
         async function () {
 
             await fetch(
-                "http://localhost:3000/logout",
+                `${AUTH_URL}/logout`,
                 {
                     method: "POST",
                     credentials: "include"
@@ -602,8 +685,11 @@ document
             renderCharts(this.value);
 
             // Re-run the recipe search with the new diet filter, resetting to page 1
-            recipeState.diet = this.value;
+            recipeState.diet =
+                this.value;
+
             recipeState.page = 1;
+
             fetchRecipes();
         }
     );
@@ -613,55 +699,87 @@ document
 function runSearch() {
 
     const searchInput =
-        document.getElementById("searchInput");
+        document.getElementById(
+            "searchInput"
+        );
 
-    recipeState.search = searchInput.value.trim();
+    recipeState.search =
+        searchInput.value.trim();
+
     recipeState.page = 1;
 
     fetchRecipes();
 }
 
+
 document
     .getElementById("searchButton")
-    .addEventListener("click", runSearch);
+    .addEventListener(
+        "click",
+        runSearch
+    );
+
 
 document
     .getElementById("searchInput")
-    .addEventListener("keydown", function (event) {
+    .addEventListener(
+        "keydown",
+        function (event) {
 
-        if (event.key === "Enter") {
-            runSearch();
+            if (event.key === "Enter") {
+                runSearch();
+            }
         }
-    });
+    );
+
 
 document
     .getElementById("recipesButton")
-    .addEventListener("click", function () {
-        recipeState.page = 1;
-        fetchRecipes();
-    });
+    .addEventListener(
+        "click",
+        function () {
+
+            recipeState.page = 1;
+
+            fetchRecipes();
+        }
+    );
 
 
 // ====== PAGINATION BUTTONS ======
 document
     .getElementById("previousButton")
-    .addEventListener("click", function () {
+    .addEventListener(
+        "click",
+        function () {
 
-        if (recipeState.page > 1) {
-            recipeState.page -= 1;
-            fetchRecipes();
+            if (recipeState.page > 1) {
+
+                recipeState.page -= 1;
+
+                fetchRecipes();
+            }
         }
-    });
+    );
+
 
 document
     .getElementById("nextButton")
-    .addEventListener("click", function () {
+    .addEventListener(
+        "click",
+        function () {
 
-        if (recipeState.page < recipeState.totalPages) {
-            recipeState.page += 1;
-            fetchRecipes();
+            if (
+                recipeState.page <
+                recipeState.totalPages
+            ) {
+
+                recipeState.page += 1;
+
+                fetchRecipes();
+            }
         }
-    });
+    );
 
 
 // ====== START DASHBOARD ======
@@ -671,6 +789,7 @@ async function startDashboard() {
         await checkLogin();
 
     if (loggedIn) {
+
         fetchNutritionData();
         fetchRecipes();
     }

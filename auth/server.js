@@ -12,7 +12,20 @@ const { TableClient } = require("@azure/data-tables");
 require("dotenv").config();
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+
+
+// Frontend and backend URLs
+const FRONTEND_URL =
+    process.env.FRONTEND_URL ||
+    "http://localhost:5500";
+
+const BACKEND_URL =
+    process.env.BACKEND_URL ||
+    "http://localhost:3000";
+
+const isProduction =
+    process.env.NODE_ENV === "production";
 
 
 // Cosmos DB connection
@@ -43,10 +56,19 @@ const tableClient = TableClient.fromConnectionString(
 );
 
 
+// Trust Azure reverse proxy in production
+if (isProduction) {
+    app.set("trust proxy", 1);
+}
+
+
 // Allow frontend requests
 app.use(
     cors({
-        origin: true,
+        origin: [
+            "http://localhost:5500",
+            "https://blue-bush-041249b0f.7.azurestaticapps.net"
+        ],
         credentials: true
     })
 );
@@ -59,7 +81,14 @@ app.use(
     session({
         secret: process.env.SESSION_SECRET || "student-project-secret",
         resave: false,
-        saveUninitialized: false
+        saveUninitialized: false,
+
+        cookie: {
+            secure: isProduction,
+            sameSite: isProduction
+                ? "none"
+                : "lax"
+        }
     })
 );
 
@@ -73,7 +102,9 @@ passport.use(
         {
             clientID: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            callbackURL: "http://localhost:3000/auth/google/callback"
+
+            callbackURL:
+                `${BACKEND_URL}/auth/google/callback`
         },
 
         async (accessToken, refreshToken, profile, done) => {
@@ -346,9 +377,16 @@ app.get(
     }),
 
     (req, res) => {
-        res.redirect(
-            "http://localhost:5500/frontend/index.html"
-        );
+
+        if (isProduction) {
+            res.redirect(
+                `${FRONTEND_URL}/`
+            );
+        } else {
+            res.redirect(
+                `${FRONTEND_URL}/frontend/index.html`
+            );
+        }
     }
 );
 
@@ -393,6 +431,6 @@ app.post("/logout", (req, res) => {
 // Start server
 app.listen(PORT, () => {
     console.log(
-        `Auth server running on http://localhost:${PORT}`
+        `Auth server running on port ${PORT}`
     );
 });

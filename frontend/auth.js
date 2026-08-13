@@ -1,3 +1,11 @@
+// Auth backend URL
+const AUTH_URL =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+        ? "http://localhost:3000"
+        : "https://project1-grp7-auth-eudpe7efbtfufhfg.eastus2-01.azurewebsites.net";
+
+
 // Register form
 const registerForm = document.getElementById("registerForm");
 
@@ -17,7 +25,7 @@ if (registerForm) {
             document.getElementById("registerPassword").value;
 
         const response = await fetch(
-            "http://localhost:3000/register",
+            `${AUTH_URL}/register`,
             {
                 method: "POST",
                 credentials: "include",
@@ -61,7 +69,7 @@ if (loginForm) {
             document.getElementById("loginPassword").value;
 
         const response = await fetch(
-            "http://localhost:3000/login",
+            `${AUTH_URL}/login`,
             {
                 method: "POST",
                 credentials: "include",
@@ -97,6 +105,6 @@ if (googleButton) {
     googleButton.addEventListener("click", function () {
 
         window.location.href =
-            "http://localhost:3000/auth/google";
+            `${AUTH_URL}/auth/google`;
     });
 }
